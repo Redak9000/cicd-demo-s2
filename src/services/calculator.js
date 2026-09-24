@@ -2,6 +2,8 @@ function addition(a, b) {
   return a + b;
 }
 
+const variableinutile = 10;
+
 function calculerTTC(prixHT, tauxTVA) {
   if (!Number.isFinite(prixHT) || !Number.isFinite(tauxTVA)) {
     throw new TypeError("prixHT et tauxTVA doivent être des nombres");
