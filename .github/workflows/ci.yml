@@ -30,3 +30,13 @@ jobs:
 
             - name: Démarerrer le conteneur
               run: docker run -d -name cicd-demo -p 3000:3000 cicd-demo-s2
+              
+            - name: Attendre l'application
+              run: | 
+                for i in {1..10}; do
+                  if curl fail http://localhost:3000/api/health; then
+                    exit 0
+                  fi
+                  sleep 2
+                done
+                exit 1
