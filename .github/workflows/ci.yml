@@ -48,3 +48,4 @@ jobs:
             - name: Nettoyer le conteneur
               if: always()
               run: docker rm -f cicd-demo || true
+              
