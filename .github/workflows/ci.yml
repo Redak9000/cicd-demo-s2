@@ -45,3 +45,6 @@ jobs:
               run: | 
                 curl --fail "http://localhost:3000/api/calcul/ttc?prix=100&tva=20" \
                 | grep '"prixTTC":120'
+            - name: Nettoyer le conteneur
+              if: always()
+              run: docker rm -f cicd-demo || true
