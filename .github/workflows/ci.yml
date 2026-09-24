@@ -29,8 +29,8 @@ jobs:
               run: docker build -t cicd-demo-s2 .
 
             - name: Démarerrer le conteneur
-              run: docker run -d -name cicd-demo -p 3000:3000 cicd-demo-s2
-              
+              run: docker run -d --name cicd-demo -p 3000:3000 cicd-demo-s2
+
             - name: Attendre l'application
               run: | 
                 for i in {1..10}; do
