@@ -40,3 +40,8 @@ jobs:
                   sleep 2
                 done
                 exit 1
+            
+            - name: Verifier le calcul TTC
+              run: | 
+                curl --fail "http://localhost:3000/api/calcul/ttc?prix=100&tva=20"
+                | grep '"prixTTC":120'
