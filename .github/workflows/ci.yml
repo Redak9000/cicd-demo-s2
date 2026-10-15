@@ -37,7 +37,7 @@ jobs:
       - name : Attendre l´application
         run : |   
           for i in {1..10}; do
-            if curl --fail http://localhost:3000/api/health; then 
+            if curl --fail http://localhost:3001/api/health; then 
               exit 0
             fi
             sleep 2
