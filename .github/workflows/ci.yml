@@ -60,5 +60,5 @@ jobs:
 
       - name: Publier dans GHCR
         run: |
-          docker push "$IMAGE_NME:${GITHUB_SHA}"
-          docker push "$IMAGE_NME:latest"
+          docker push "$IMAGE_NAME:${GITHUB_SHA}"
+          docker push "$IMAGE_NAME:latest"
