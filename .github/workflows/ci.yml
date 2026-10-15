@@ -54,11 +54,14 @@ jobs:
 
       - name : Preparer le nom l'image
         run : |
-          REPO="${{ github.repository  }}"
+          REPO="${GITHUB_REPOSITORY,,}"
           IMAGE_NAME="ghcr.io/${REPO}"
+          docker tag cicd-demo-s2 "$IMAGE_NAME:${GITHUB_SHA}"
+          docker tag cicd-demo-s2 "$IMAGE_NAME:latest"
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Publier dans GHCR
         run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           docker push "$IMAGE_NAME:${GITHUB_SHA}"
           docker push "$IMAGE_NAME:latest"
