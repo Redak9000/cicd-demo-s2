@@ -5,7 +5,7 @@ on:
     branches: [main]
 permissions :
         contents : read
-        packages : write
+        packages : read
 jobs:
   build:
     runs-on: ubuntu-latest  # we define the runer 
@@ -32,12 +32,12 @@ jobs:
         run : docker build -t cicd-demo-s2 .
 
       - name : Demarer le conteneur docker
-        run : docker run -d -p 3000:3000 -e PORT=3000 --name cicd-demo cicd-demo-s2
+        run : docker run -d -p 3000:3000 --name cicd-demo cicd-demo-s2
 
       - name : Attendre l´application
-        run : |   
+        run : | 
           for i in {1..10}; do
-            if curl --silent --show-error --fail http://localhost:3000/api/health; then 
+            if curl --fail http://localhost:3000/api/health; then 
               exit 0
             fi
             sleep 2
@@ -46,7 +46,7 @@ jobs:
 
       - name : Vérifie le calcule TTC 
         run: |
-          curl --silent --show-error --fail "http://localhost:3000/api/calcul/ttc?prix=100&tva=20" | grep "120"
+          curl --fail "http://localhost:3000/api/calcul/ttc?prix=100&tva=20" | grep "120"
 
       - name : Netoyer le conteneur
         if : always()
@@ -54,14 +54,24 @@ jobs:
 
       - name : Preparer le nom l'image
         run : |
-          REPO="${GITHUB_REPOSITORY,,}"
+          REPO="${{ github.repository  }}"
           IMAGE_NAME="ghcr.io/${REPO}"
-          docker tag cicd-demo-s2 "$IMAGE_NAME:${GITHUB_SHA}"
-          docker tag cicd-demo-s2 "$IMAGE_NAME:latest"
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
 
-      - name: Publier dans GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name : Connection a GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name : Tagger l'image validee
+        run : |
+         docker tag cicd-demo-s2 "$IMAGE_NAME:${GITHUB_SHA}"
+         docker tag cicd-demo-s2 "$IMAGE_NAME:latest"
+         docker image ls "$IMAGE_NAME"
+
+      - name : PUblier dans GHCR
+        run : |
           docker push "$IMAGE_NAME:${GITHUB_SHA}"
           docker push "$IMAGE_NAME:latest"
