@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", version: "1.0" });
+  res.json({ status: "OK", version: "2.0" });
 });
 
 app.get("/api/calcul/ttc", (req, res) => {
