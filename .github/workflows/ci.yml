@@ -28,7 +28,7 @@ jobs:
       - name: Lancer les tests
         run: npm test
 
-      - name : construire l'image docker
+      - name : Construire l'image Docker
         run : docker build -t cicd-demo-s2 .
 
       - name : Demarer le conteneur docker
@@ -52,7 +52,7 @@ jobs:
         if : always()
         run : docker rm -f cicd-demo || true
 
-      - name : Preparer le nom l'image
+      - name : Préparer le nom de l'image
         run : |
           REPO="${GITHUB_REPOSITORY,,}"
           IMAGE_NAME="ghcr.io/${REPO}"
@@ -65,13 +65,55 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name : Tagger l'image validee
+      - name : Tagger l'image validée
         run : |
          docker tag cicd-demo-s2 "$IMAGE_NAME:${GITHUB_SHA}"
-         docker tag cicd-demo-s2 "$IMAGE_NAME:latest"
          docker image ls "$IMAGE_NAME"
 
-      - name : PUblier dans GHCR
-        run : |
-          docker push "$IMAGE_NAME:${GITHUB_SHA}"
-          docker push "$IMAGE_NAME:latest"
+      - name : Publier dans GHCR
+        run: docker push "$IMAGE_NAME:${GITHUB_SHA}"
+
+  deploy_staging:
+    name: Déployer en staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      packages: read
+    timeout-minutes: 10
+    steps:
+      - name: Préparer le nom de l'image
+        run: |
+          REPO="${GITHUB_REPOSITORY,,}"
+          echo "IMAGE_NAME=ghcr.io/${REPO}" >> "$GITHUB_ENV"
+
+      - name: Connexion à GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tirer l'image validée
+        run: docker pull "$IMAGE_NAME:${GITHUB_SHA}"
+
+      - name: Démarrer le conteneur staging
+        run: docker run -d -p 3000:3000 --name cicd-demo-staging "$IMAGE_NAME:${GITHUB_SHA}"
+
+      - name: Vérifier la santé de staging et le TTC
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:3000/api/health; then
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent "http://localhost:3000/api/calcul/ttc?prix=100&tva=20" | grep -q '"prixTTC":120'
+
+      - name: Nettoyer le conteneur staging
+        if: always()
+        run: docker rm -f cicd-demo-staging || true
